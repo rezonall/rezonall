@@ -1,0 +1,919 @@
+# Postman ile Tool Call Endpoint Test Rehberi
+
+## ⚡ Hızlı Başlangıç (30 Saniye)
+
+**Call ID'ye ihtiyacınız YOK!** Sadece şunu gönderin:
+
+```bash
+POST https://siparisbot.vercel.app/api/webhooks/tool-call
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "tool_call_id": "test_123",
+  "tool_name": "create_order",
+  "arguments": {
+    "items": "1 Pizza"
+  }
+}
+```
+
+✅ Sistem otomatik olarak:
+- Uygun bot'u bulur (`create_order` için restaurant bot)
+- Test call kaydı oluşturur
+- Siparişi başarıyla oluşturur
+
+---
+
+## 🎯 Endpoint Bilgileri
+
+**URL:** `POST https://siparisbot.vercel.app/api/webhooks/tool-call`
+
+**Not:** Bu endpoint `call_id` olmadan da çalışabilir! Sistem otomatik olarak test call kaydı oluşturur.
+
+## 📋 Request Format
+
+### Headers
+```
+Content-Type: application/json
+```
+
+### Body (JSON)
+
+## 🚀 Test Senaryoları
+
+### ✅ Senaryo 1: Call ID OLMAYAN Test (EN KOLAY - ÖNERİLEN)
+
+**Bu senaryo call_id göndermeden test yapmak için ideal!** Sistem otomatik olarak:
+- `tool_name`'e göre uygun bot'u bulur (`create_order` için restaurant bot)
+- Test amaçlı geçici call kaydı oluşturur
+- Siparişi başarıyla oluşturur
+
+```json
+{
+  "tool_call_id": "test_{{$timestamp}}",
+  "tool_name": "create_order",
+  "arguments": {
+    "customer_name": "Test Müşteri",
+    "items": "2 Adana Kebap, 1 Ayran, 1 Salata",
+    "total_amount": 150.00,
+    "delivery_address": "İstanbul, Kadıköy, Bağdat Caddesi No:123",
+    "notes": "Acılı olsun"
+  }
+}
+```
+
+**Minimal Versiyon (Sadece Zorunlu Alanlar):**
+```json
+{
+  "tool_call_id": "test_{{$timestamp}}",
+  "tool_name": "create_order",
+  "arguments": {
+    "items": "1 Pizza, 2 Kola"
+  }
+}
+```
+
+### ✅ Senaryo 2: Agent ID ile Test (Call ID Olmadan)
+
+Eğer belirli bir bot kullanmak istiyorsanız, `agent_id` ekleyin:
+
+```json
+{
+  "tool_call_id": "test_{{$timestamp}}",
+  "tool_name": "create_order",
+  "agent_id": "YOUR_RETELL_AGENT_ID",
+  "arguments": {
+    "customer_name": "Ahmet Yılmaz",
+    "customer_phone": "+905551234567",
+    "items": "2 Adana Kebap, 1 Ayran",
+    "total_amount": 150.00,
+    "delivery_address": "İstanbul, Kadıköy"
+  }
+}
+```
+
+### ✅ Senaryo 3: Call ID ile Test (Gerçek Call Senaryosu)
+
+Gerçek bir call kaydı varsa ve ona bağlı sipariş oluşturmak istiyorsanız:
+
+```json
+{
+  "call_id": "YOUR_RETELL_CALL_ID",
+  "tool_call_id": "test_tool_call_123",
+  "tool_name": "create_order",
+  "arguments": {
+    "customer_name": "Ahmet Yılmaz",
+    "customer_phone": "+905551234567",
+    "items": "2 Adana Kebap, 1 Ayran, 1 Salata",
+    "total_amount": 150.00,
+    "delivery_address": "İstanbul, Kadıköy, Bağdat Caddesi No:123",
+    "notes": "Acılı olsun"
+  },
+  "agent_id": "YOUR_RETELL_AGENT_ID"
+}
+```
+
+### ✅ Senaryo 4: Call ID Olmayan Yeni Call (Sistem Otomatik Oluşturur)
+
+```json
+{
+  "call_id": "test_call_{{$timestamp}}",
+  "tool_call_id": "test_tool_call_789",
+  "tool_name": "create_order",
+  "arguments": {
+    "customer_name": "Mehmet Demir",
+    "items": "3 Hamburger, 2 Patates",
+    "total_amount": "200 TL",
+    "delivery_address": "Ankara, Çankaya, Kızılay"
+  },
+  "agent_id": "YOUR_RETELL_AGENT_ID"
+}
+```
+
+## 📝 Test İçin Gerekli Bilgiler
+
+### ⚡ Hızlı Başlangıç (Call ID Gerekmez!)
+
+**En kolay yol:** Senaryo 1'i kullanın! Sadece `tool_name` ve `arguments` yeterli. Sistem:
+- Otomatik olarak uygun bot'u bulur
+- Test call kaydı oluşturur
+- Siparişi başarıyla oluşturur
+
+```json
+{
+  "tool_call_id": "test_123",
+  "tool_name": "create_order",
+  "arguments": {
+    "items": "1 Pizza"
+  }
+}
+```
+
+### 🔍 Opsiyonel: Agent ID Nasıl Bulunur?
+
+Agent ID'yi bulmak istiyorsanız (zorunlu değil):
+
+**Yöntem A: API'den**
+```bash
+GET https://siparisbot.vercel.app/api/bots
+# Response'dan retellAgentId'yi kopyalayın
+```
+
+**Yöntem B: Veritabanından**
+```sql
+SELECT id, name, "retellAgentId" 
+FROM "Bot" 
+WHERE "organizationId" = 'YOUR_ORG_ID';
+```
+
+**Yöntem C: Mevcut Call'dan**
+```sql
+SELECT "retellCallId", "botId"
+FROM "Call"
+ORDER BY "createdAt" DESC
+LIMIT 1;
+```
+
+### 📞 Call ID Nasıl Bulunur? (Opsiyonel)
+
+Call ID sadece gerçek bir call'a bağlı sipariş oluşturmak istiyorsanız gerekli:
+
+**Yöntem A: Veritabanından**
+```sql
+SELECT id, "retellCallId" 
+FROM "Call" 
+ORDER BY "createdAt" DESC 
+LIMIT 1;
+```
+
+**Yöntem B: Retell Dashboard'dan**
+- Retell dashboard'dan aktif veya geçmiş call'ları görüntüleyin
+- Call ID'sini kopyalayın
+
+**Not:** Test için call_id'ye ihtiyacınız yok! Senaryo 1'i kullanın.
+
+## Beklenen Response Formatları
+
+### Başarılı Response (200 OK)
+```json
+{
+  "result": "{\"success\":true,\"order_id\":\"clx1234567890\",\"message\":\"Siparişiniz alındı. Sipariş numaranız: 7890. Hazırlanmaya başlıyor.\"}",
+  "tool_call_id": "test_tool_call_123"
+}
+```
+
+**Not:** `result` field'ı string formatında JSON içeriyor. Parse etmek için:
+```javascript
+const parsed = JSON.parse(response.result);
+// { success: true, order_id: "...", message: "..." }
+```
+
+### Hata Response (200 OK - Retell Format)
+```json
+{
+  "result": "Error: Tool 'create_order' not found. Available tools: ...",
+  "tool_call_id": "test_tool_call_123"
+}
+```
+
+## 🚀 Postman Test Adımları (Adım Adım)
+
+### Adım 1: Collection ve Environment Oluştur
+
+1. **Postman'i açın** ve yeni Collection oluşturun:
+   - Sağ üstteki **"New"** → **"Collection"**
+   - Collection adı: `SiparisBot Tool Call Tests`
+
+2. **Environment oluşturun** (opsiyonel ama önerilir):
+   - Sağ üstteki **"Environments"** → **"+"** butonu
+   - Environment adı: `SiparisBot Production`
+   - Variable'ları ekleyin:
+     ```
+     BASE_URL: https://siparisbot.vercel.app
+     AGENT_ID: (opsiyonel - eğer belirli bot kullanacaksanız)
+     ```
+   - Environment'ı seçili hale getirin (sağ üst köşede)
+
+### Adım 2: Request Oluştur (Call ID Olmadan - ÖNERİLEN)
+
+1. **Yeni Request oluşturun:**
+   - Collection'a sağ tıklayın → **"Add Request"**
+   - Request adı: `Create Order - No Call ID (Easiest)`
+
+2. **Request ayarları:**
+   - Method: **POST** (dropdown'dan seçin)
+   - URL: `{{BASE_URL}}/api/webhooks/tool-call`
+     - Veya direkt: `https://siparisbot.vercel.app/api/webhooks/tool-call`
+
+3. **Headers ekleyin:**
+   - **Headers** tab'ına gidin
+   - **Key:** `Content-Type`
+   - **Value:** `application/json`
+   - **Save** butonuna tıklayın
+
+4. **Body ayarları (ÖNEMLİ):**
+   - **Body** tab'ına gidin
+   - **raw** seçeneğini seçin
+   - Dropdown'dan **JSON** seçin
+   - Aşağıdaki body'yi yapıştırın:
+
+```json
+{
+  "tool_call_id": "test_{{$timestamp}}",
+  "tool_name": "create_order",
+  "arguments": {
+    "customer_name": "Test Müşteri",
+    "items": "2 Adana Kebap, 1 Ayran",
+    "total_amount": 150.00,
+    "delivery_address": "İstanbul, Kadıköy, Test Mahallesi",
+    "notes": "Test siparişi"
+  }
+}
+```
+
+**Not:** `{{$timestamp}}` Postman'ın otomatik değişkeni - her request'te farklı değer oluşturur.
+
+5. **Send butonuna tıklayın!** 🎉
+
+### Adım 3: Response Kontrolü
+
+Başarılı response şöyle görünür:
+
+```json
+{
+  "result": "{\"success\":true,\"order_id\":\"clx1234567890\",\"message\":\"Siparişiniz alındı. Sipariş numaranız: 7890. Hazırlanmaya başlıyor.\"}",
+  "tool_call_id": "test_1234567890"
+}
+```
+
+**Response'u parse etmek için:**
+- `result` field'ı string formatında JSON içerir
+- JavaScript'te: `JSON.parse(response.result)`
+- Postman'de: Test script'inde parse edebilirsiniz (aşağıdaki bölüm)
+
+### Adım 4: Minimal Test (Sadece Zorunlu Alanlar)
+
+Daha basit bir test için yeni request oluşturun:
+
+**Request adı:** `Create Order - Minimal`
+
+**Body:**
+```json
+{
+  "tool_call_id": "minimal_{{$timestamp}}",
+  "tool_name": "create_order",
+  "arguments": {
+    "items": "1 Pizza"
+  }
+}
+```
+
+Bu da çalışmalı! ✅
+
+### Adım 4: Test Script'i (Opsiyonel)
+Response'u kontrol etmek için:
+```javascript
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has result and tool_call_id", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('result');
+    pm.expect(jsonData).to.have.property('tool_call_id');
+});
+
+pm.test("Result is valid", function () {
+    var jsonData = pm.response.json();
+    var result = JSON.parse(jsonData.result);
+    
+    if (result.error) {
+        console.log("Error:", result.message);
+    } else {
+        console.log("Success:", result.message);
+        pm.expect(result).to.have.property('success', true);
+    }
+});
+```
+
+## Debug İçin Log Kontrolü
+
+Server log'larında şunları arayın:
+- `[tool-call] Executing tool: create_order`
+- `[create_order] Starting with args:`
+- `[create_order] Call info:`
+- `[create_order] Order created/updated successfully:`
+
+Hata varsa:
+- `[create_order] Failed to create order:`
+- Error stack trace
+
+## ❌ Yaygın Hatalar ve Çözümleri
+
+### Hata: "call_id is required but was not provided"
+**Sebep:** Sistem bot bulamadı veya call oluşturamadı
+**Çözüm:** 
+- ✅ **En kolay:** Senaryo 1'i kullanın (call_id gerekmez!)
+- Veya `agent_id` ekleyin
+- Veya sistemde en az bir bot olduğundan emin olun
+
+### ❌ Hata: "Tool 'create_order' not found. Available tools: (none)"
+
+**Sebep:** Bulunan bot'ta `create_order` tool'u tanımlı değil veya `customTools` boş
+
+**Geçici Çözüm (Otomatik - Yeni!):** 
+- ✅ Kod artık otomatik olarak built-in tool'ları (`create_order`, `create_reservation`, `check_availability`) inject ediyor
+- Eğer hala hata alıyorsanız, aşağıdaki kalıcı çözümü uygulayın
+
+**Kalıcı Çözüm (Önerilen):**
+
+#### Yöntem 1: Bot'u UI'dan Güncellemek (En Kolay)
+1. Admin panel'e giriş yapın (`http://localhost:3000`)
+2. Bot ayarlarına gidin
+3. Herhangi bir field'ı değiştirip kaydedin (örn: `generalPrompt`)
+4. Sistem RESTAURANT tipindeki bot'lar için otomatik olarak `create_order` tool'unu ekler
+
+#### Yöntem 2: Postman ile Bot'u Güncellemek
+
+**Adım 1: Bot ID'sini Bulun**
+```bash
+GET http://localhost:3000/api/bots
+
+Headers:
+Cookie: next-auth.session-token=YOUR_SESSION_TOKEN
+```
+
+Response'dan `id` field'ını kopyalayın.
+
+**Adım 2: Bot'u Güncelleyin (Herhangi Bir Field)**
+```bash
+PUT http://localhost:3000/api/bots/{botId}
+
+Headers:
+Content-Type: application/json
+Cookie: next-auth.session-token=YOUR_SESSION_TOKEN
+
+Body:
+{
+  "generalPrompt": "Mevcut prompt'unuz (herhangi bir değişiklik yapabilirsiniz)"
+}
+```
+
+**Not:** Eğer kullanıcınız `customerType: "RESTAURANT"` ise, sistem otomatik olarak `create_order` tool'unu ekler.
+
+#### Yöntem 3: Tool'u Manuel Eklemek (İleri Seviye)
+
+Detaylar için `ADD_CREATE_ORDER_TOOL.md` dosyasına bakın.
+
+### Hata: "No bot found in system"
+**Sebep:** Veritabanında hiç bot yok
+**Çözüm:**
+- Önce bir bot oluşturun
+- POST `/api/bots` endpoint'ini kullanın
+- Veya admin panel'den bot oluşturun
+
+### Hata: "No user found for organization"
+**Sebep:** Bot'un organization'ında kullanıcı yok
+**Çözüm:**
+- Organizasyona en az bir kullanıcı ekleyin
+- Admin panel'den kullanıcı oluşturun
+
+### Hata: "Items are required but not provided"
+**Sebep:** `arguments.items` field'ı eksik veya boş
+**Çözüm:**
+- Request body'de `arguments.items` field'ını ekleyin
+- Örnek: `"items": "1 Pizza"`
+
+### Hata: "Call ID is missing - call may not be saved yet"
+**Sebep:** (Nadir) Call kaydı oluşturulamadı
+**Çözüm:**
+- Tekrar deneyin
+- Server log'larını kontrol edin
+- `agent_id` ekleyerek tekrar deneyin
+
+## Örnek Postman Collection JSON
+
+```json
+{
+  "info": {
+    "name": "SiparisBot Tool Call Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Order - Full",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"call_id\": \"{{CALL_ID}}\",\n  \"tool_call_id\": \"test_{{$timestamp}}\",\n  \"tool_name\": \"create_order\",\n  \"arguments\": {\n    \"customer_name\": \"Ahmet Yılmaz\",\n    \"customer_phone\": \"+905551234567\",\n    \"items\": \"2 Adana Kebap, 1 Ayran\",\n    \"total_amount\": 150.00,\n    \"delivery_address\": \"İstanbul, Kadıköy\",\n    \"notes\": \"Acılı olsun\"\n  },\n  \"agent_id\": \"{{AGENT_ID}}\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/webhooks/tool-call",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "webhooks", "tool-call"]
+        }
+      }
+    },
+    {
+      "name": "Create Order - Minimal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"call_id\": \"{{CALL_ID}}\",\n  \"tool_call_id\": \"test_minimal_{{$timestamp}}\",\n  \"tool_name\": \"create_order\",\n  \"arguments\": {\n    \"items\": \"1 Pizza\"\n  },\n  \"agent_id\": \"{{AGENT_ID}}\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/webhooks/tool-call",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "webhooks", "tool-call"]
+        }
+      }
+    }
+  ]
+}
+```
+
+## 📊 Test Sonuçlarını Kontrol Etme
+
+### Veritabanında Oluşturulan Siparişi Görüntüleme
+
+```sql
+-- Son oluşturulan siparişleri görüntüle
+SELECT 
+  o.id as order_id,
+  o."customerName",
+  o.items,
+  o."totalAmount",
+  o.status,
+  o."createdAt",
+  c."retellCallId" as call_id
+FROM "Order" o
+LEFT JOIN "Call" c ON o."callId" = c.id
+ORDER BY o."createdAt" DESC
+LIMIT 5;
+
+-- Test call'larını görüntüle (test_ ile başlayanlar)
+SELECT 
+  id,
+  "retellCallId",
+  status,
+  "createdAt"
+FROM "Call"
+WHERE "retellCallId" LIKE 'test_%'
+ORDER BY "createdAt" DESC
+LIMIT 10;
+```
+
+### API ile Siparişleri Görüntüleme
+
+```bash
+GET https://siparisbot.vercel.app/api/orders
+# Cookie ile authentication gerekli
+```
+
+## 🎓 Test Senaryoları Özeti
+
+| Senaryo | Call ID Gerekli? | Agent ID Gerekli? | Kullanım Durumu |
+|---------|------------------|-------------------|-----------------|
+| Senaryo 1 | ❌ Hayır | ❌ Hayır | ⭐ **EN KOLAY - ÖNERİLEN** |
+| Senaryo 2 | ❌ Hayır | ✅ Evet | Belirli bot kullanmak istiyorsanız |
+| Senaryo 3 | ✅ Evet | ✅ Evet | Gerçek call'a bağlı sipariş |
+| Senaryo 4 | ✅ Test ID | ✅ Evet | Yeni test call oluşturma |
+
+**Tavsiye:** Her zaman Senaryo 1'i kullanın! En basit ve en hızlı yöntem.
+
+---
+
+# 🏨 create_reservation Endpoint Test Rehberi
+
+## ⚡ Hızlı Başlangıç (30 Saniye)
+
+**Call ID'ye ihtiyacınız YOK!** Sadece şunu gönderin:
+
+```bash
+POST https://siparisbot.vercel.app/api/webhooks/tool-call
+
+Headers:
+Content-Type: application/json
+
+Body:
+{
+  "tool_call_id": "test_reservation_123",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Test Müşteri",
+    "roomType": "Standard"
+  }
+}
+```
+
+✅ Sistem otomatik olarak:
+- Uygun bot'u bulur (`create_reservation` için hotel bot)
+- Test call kaydı oluşturur
+- Rezervasyonu başarıyla oluşturur
+
+---
+
+## 🎯 Endpoint Bilgileri
+
+**URL:** `POST https://siparisbot.vercel.app/api/webhooks/tool-call`
+
+**Not:** Bu endpoint `call_id` olmadan da çalışabilir! Sistem otomatik olarak test call kaydı oluşturur.
+
+## 📋 Request Format
+
+### Headers
+```
+Content-Type: application/json
+```
+
+### Body (JSON)
+
+## 🚀 create_reservation Test Senaryoları
+
+### ✅ Senaryo 1: Call ID OLMAYAN Test (EN KOLAY - ÖNERİLEN)
+
+**Bu senaryo call_id göndermeden test yapmak için ideal!** Sistem otomatik olarak:
+- `tool_name`'e göre uygun bot'u bulur (`create_reservation` için hotel bot)
+- Test amaçlı geçici call kaydı oluşturur
+- Rezervasyonu başarıyla oluşturur
+
+```json
+{
+  "tool_call_id": "test_reservation_{{$timestamp}}",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Ahmet Yılmaz",
+    "roomType": "Standard",
+    "guestPhone": "+905551234567",
+    "specialRequests": "Late check-in"
+  }
+}
+```
+
+**Minimal Versiyon (Sadece Zorunlu Alanlar):**
+```json
+{
+  "tool_call_id": "test_reservation_{{$timestamp}}",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Test Müşteri",
+    "roomType": "Standard"
+  }
+}
+```
+
+### ✅ Senaryo 2: Agent ID ile Test (Call ID Olmadan)
+
+Eğer belirli bir hotel bot kullanmak istiyorsanız, `agent_id` ekleyin:
+
+```json
+{
+  "tool_call_id": "test_reservation_{{$timestamp}}",
+  "tool_name": "create_reservation",
+  "agent_id": "YOUR_RETELL_AGENT_ID",
+  "arguments": {
+    "checkIn": "2024-12-25",
+    "checkOut": "2024-12-28",
+    "guests": 4,
+    "guestName": "Mehmet Demir",
+    "roomType": "Deluxe",
+    "guestPhone": "+905551234567",
+    "specialRequests": "High floor preferred"
+  }
+}
+```
+
+### ✅ Senaryo 3: Call ID ile Test (Gerçek Call Senaryosu)
+
+Gerçek bir call kaydı varsa ve ona bağlı rezervasyon oluşturmak istiyorsanız:
+
+```json
+{
+  "call_id": "YOUR_RETELL_CALL_ID",
+  "tool_call_id": "test_reservation_123",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Ahmet Yılmaz",
+    "roomType": "Standard",
+    "guestPhone": "+905551234567",
+    "specialRequests": "Non-smoking room"
+  },
+  "agent_id": "YOUR_RETELL_AGENT_ID"
+}
+```
+
+## 📝 create_reservation İçin Gerekli Parametreler
+
+### Zorunlu Parametreler:
+- ✅ `checkIn`: Check-in tarihi (YYYY-MM-DD formatında, örn: "2024-12-20")
+- ✅ `checkOut`: Check-out tarihi (YYYY-MM-DD formatında, örn: "2024-12-22")
+- ✅ `guests`: Misafir sayısı (number, minimum 1)
+- ✅ `guestName`: Misafir adı (string, minimum 2 karakter)
+- ✅ `roomType`: Oda tipi adı (string, örn: "Standard", "Deluxe", "Suite")
+
+### Opsiyonel Parametreler:
+- ⚪ `guestPhone`: Misafir telefon numarası (string)
+- ⚪ `specialRequests`: Özel istekler (string, örn: "Late check-in", "High floor")
+
+## 🚀 Postman Test Adımları (create_reservation)
+
+### Adım 1: Request Oluştur
+
+1. **Yeni Request oluşturun:**
+   - Collection'a sağ tıklayın → **"Add Request"**
+   - Request adı: `Create Reservation - No Call ID (Easiest)`
+
+2. **Request ayarları:**
+   - Method: **POST** (dropdown'dan seçin)
+   - URL: `{{BASE_URL}}/api/webhooks/tool-call`
+     - Veya direkt: `https://siparisbot.vercel.app/api/webhooks/tool-call`
+
+3. **Headers ekleyin:**
+   - **Headers** tab'ına gidin
+   - **Key:** `Content-Type`
+   - **Value:** `application/json`
+   - **Save** butonuna tıklayın
+
+4. **Body ayarları (ÖNEMLİ):**
+   - **Body** tab'ına gidin
+   - **raw** seçeneğini seçin
+   - Dropdown'dan **JSON** seçin
+   - Aşağıdaki body'yi yapıştırın:
+
+```json
+{
+  "tool_call_id": "test_reservation_{{$timestamp}}",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Test Müşteri",
+    "roomType": "Standard",
+    "guestPhone": "+905551234567",
+    "specialRequests": "Late check-in"
+  }
+}
+```
+
+**Not:** 
+- `{{$timestamp}}` Postman'ın otomatik değişkeni - her request'te farklı değer oluşturur
+- Tarihleri gelecek tarih olarak ayarlayın (bugünden sonra)
+- `checkOut` tarihi `checkIn` tarihinden sonra olmalı
+- `roomType` veritabanınızdaki oda tipi adlarından biri olmalı
+
+5. **Send butonuna tıklayın!** 🎉
+
+### Adım 2: Response Kontrolü
+
+Başarılı response şöyle görünür:
+
+```json
+{
+  "result": "{\"success\":true,\"confirmationCode\":\"ABC123\",\"reservation_id\":\"clx1234567890\",\"message\":\"Rezervasyon oluşturuldu! Onay kodunuz: ABC123. Bizi tercih ettiğiniz için teşekkürler.\"}",
+  "tool_call_id": "test_reservation_1234567890"
+}
+```
+
+**Response'u parse etmek için:**
+- `result` field'ı string formatında JSON içerir
+- JavaScript'te: `JSON.parse(response.result)`
+- Postman'de: Test script'inde parse edebilirsiniz (aşağıdaki bölüm)
+
+### Adım 3: Minimal Test (Sadece Zorunlu Alanlar)
+
+Daha basit bir test için yeni request oluşturun:
+
+**Request adı:** `Create Reservation - Minimal`
+
+**Body:**
+```json
+{
+  "tool_call_id": "minimal_reservation_{{$timestamp}}",
+  "tool_name": "create_reservation",
+  "arguments": {
+    "checkIn": "2024-12-20",
+    "checkOut": "2024-12-22",
+    "guests": 2,
+    "guestName": "Test Müşteri",
+    "roomType": "Standard"
+  }
+}
+```
+
+Bu da çalışmalı! ✅
+
+### Adım 4: Test Script'i (Opsiyonel)
+
+Response'u kontrol etmek için:
+```javascript
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Response has result and tool_call_id", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property('result');
+    pm.expect(jsonData).to.have.property('tool_call_id');
+});
+
+pm.test("Reservation created successfully", function () {
+    var jsonData = pm.response.json();
+    var result = JSON.parse(jsonData.result);
+    
+    if (result.error) {
+        console.log("Error:", result.message);
+    } else {
+        console.log("Success:", result.message);
+        pm.expect(result).to.have.property('success', true);
+        pm.expect(result).to.have.property('confirmationCode');
+        pm.expect(result.confirmationCode).to.be.a('string');
+    }
+});
+```
+
+## 📊 Test Sonuçlarını Kontrol Etme
+
+### Veritabanında Oluşturulan Rezervasyonu Görüntüleme
+
+```sql
+-- Son oluşturulan rezervasyonları görüntüle
+SELECT 
+  r.id as reservation_id,
+  r."guestName",
+  r."checkIn",
+  r."checkOut",
+  r."numberOfGuests",
+  r."roomType",
+  r."confirmationCode",
+  r.status,
+  r."createdAt",
+  c."retellCallId" as call_id
+FROM "Reservation" r
+LEFT JOIN "Call" c ON r."callId" = c.id
+ORDER BY r."createdAt" DESC
+LIMIT 5;
+
+-- Test call'larını görüntüle (test_ ile başlayanlar)
+SELECT 
+  id,
+  "retellCallId",
+  status,
+  "createdAt"
+FROM "Call"
+WHERE "retellCallId" LIKE 'test_%'
+ORDER BY "createdAt" DESC
+LIMIT 10;
+```
+
+## ❌ Yaygın Hatalar ve Çözümleri (create_reservation)
+
+### Hata: "Room type not found"
+**Sebep:** Veritabanında belirtilen oda tipi bulunamadı
+**Çözüm:** 
+- `roomType` parametresinin doğru yazıldığından emin olun
+- Admin panel'den oda tiplerini kontrol edin
+- Oda tipinin aktif (`isActive: true`) olduğundan emin olun
+- Oda tipi adı büyük/küçük harf duyarlı değildir (case-insensitive)
+
+### Hata: "Invalid date format"
+**Sebep:** Tarih formatı yanlış
+**Çözüm:** 
+- Tarihler mutlaka `YYYY-MM-DD` formatında olmalı (örn: `2024-12-20`)
+- `checkIn` ve `checkOut` her ikisi de bu formatta olmalı
+
+### Hata: "Check-in tarihi bugünden önce olamaz"
+**Sebep:** Check-in tarihi geçmiş bir tarih
+**Çözüm:** 
+- `checkIn` tarihini bugünden sonra bir tarih olarak ayarlayın
+
+### Hata: "Check-out tarihi check-in tarihinden sonra olmalıdır"
+**Sebep:** Check-out tarihi check-in tarihinden önce veya aynı
+**Çözüm:** 
+- `checkOut` tarihini `checkIn` tarihinden sonra bir tarih olarak ayarlayın
+
+### Hata: "Tool 'create_reservation' not found"
+**Sebep:** Bulunan bot'ta `create_reservation` tool'u tanımlı değil
+**Çözüm:** 
+- ✅ Kod artık otomatik olarak built-in tool'ları (`create_reservation`) inject ediyor
+- Eğer hala hata alıyorsanız, bot'un `customerType: "HOTEL"` olduğundan emin olun
+- Bot'u güncelleyin (herhangi bir field'ı değiştirip kaydedin)
+
+### Hata: "No bot found in system"
+**Sebep:** Veritabanında hiç hotel bot'u yok
+**Çözüm:**
+- Önce bir hotel bot'u oluşturun
+- POST `/api/bots` endpoint'ini kullanın
+- Veya admin panel'den bot oluşturun
+
+### Hata: "Required fields missing"
+**Sebep:** Zorunlu parametrelerden biri eksik
+**Çözüm:**
+- `checkIn`, `checkOut`, `guests`, `guestName`, ve `roomType` parametrelerinin hepsinin gönderildiğinden emin olun
+
+## 📅 Tarih Formatı Örnekleri
+
+Doğru tarih formatları:
+```json
+"checkIn": "2024-12-20"  ✅
+"checkOut": "2024-12-22" ✅
+```
+
+Yanlış tarih formatları:
+```json
+"checkIn": "20-12-2024"  ❌ (DD-MM-YYYY)
+"checkOut": "12/20/2024" ❌ (MM/DD/YYYY)
+"checkIn": "2024-12-20T00:00:00Z" ❌ (ISO format)
+```
+
+## 🏨 Oda Tipi Örnekleri
+
+Oda tipi adları veritabanınızdaki `RoomType` tablosundaki `name` field'ına göre eşleşmelidir. Örnekler:
+
+```json
+"roomType": "Standard"   ✅
+"roomType": "Deluxe"     ✅
+"roomType": "Suite"      ✅
+"roomType": "standard"   ✅ (büyük/küçük harf duyarlı değil)
+"roomType": "DELUXE"     ✅ (büyük/küçük harf duyarlı değil)
+```
+
+## 🎓 create_reservation Test Senaryoları Özeti
+
+| Senaryo | Call ID Gerekli? | Agent ID Gerekli? | Kullanım Durumu |
+|---------|------------------|-------------------|-----------------|
+| Senaryo 1 | ❌ Hayır | ❌ Hayır | ⭐ **EN KOLAY - ÖNERİLEN** |
+| Senaryo 2 | ❌ Hayır | ✅ Evet | Belirli hotel bot kullanmak istiyorsanız |
+| Senaryo 3 | ✅ Evet | ✅ Evet | Gerçek call'a bağlı rezervasyon |
+
+**Tavsiye:** Her zaman Senaryo 1'i kullanın! En basit ve en hızlı yöntem.
+
