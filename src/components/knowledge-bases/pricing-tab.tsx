@@ -86,6 +86,7 @@ export default function PricingTab({
       <TabsContent value="discounts" className="mt-0">
         <DiscountsTable
           discounts={pricing.discounts}
+          roomTypes={roomTypes}
           onChange={(discounts) =>
             onChange({ ...pricing, discounts })
           }

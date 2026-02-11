@@ -3,7 +3,15 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select"
 import { Plus, Trash2 } from "lucide-react"
+import type { RoomType } from "./room-types-table"
 
 interface Discount {
   id: string
@@ -18,11 +26,13 @@ interface Discount {
 
 interface DiscountsTableProps {
   discounts: Discount[]
+  roomTypes?: RoomType[]
   onChange: (discounts: Discount[]) => void
 }
 
 export default function DiscountsTable({
   discounts,
+  roomTypes = [],
   onChange
 }: DiscountsTableProps) {
   const addDiscount = (e?: React.MouseEvent) => {
@@ -163,12 +173,30 @@ export default function DiscountsTable({
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      value={discount.odaTipi}
-                      onChange={(e) => updateDiscount(discount.id, "odaTipi", e.target.value)}
-                      placeholder="Örn: Standart"
-                      className="w-full"
-                    />
+                    <Select
+                      value={discount.odaTipi || "_bos"}
+                      onValueChange={(value) =>
+                        updateDiscount(discount.id, "odaTipi", value === "_bos" ? "" : value)
+                      }
+                    >
+                      <SelectTrigger className="w-full min-w-[120px]">
+                        <SelectValue placeholder="Oda tipi seçin" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_bos">— Seçin —</SelectItem>
+                        {roomTypes.length > 0 ? (
+                          roomTypes.map((rt) => (
+                            <SelectItem key={rt.id} value={rt.name || "İsimsiz Oda"}>
+                              {rt.name || "İsimsiz Oda"}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="_empty" disabled>
+                            Önce Oda Tipleri sekmesinden oda tipi ekleyin
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <Button
