@@ -1459,6 +1459,8 @@ async function executeBuiltInTool(
           return {
             success: true,
             pricingPrompt: null,
+            rules: {},
+            discounts: [],
             message: "Fiyat hesaplama prompt'u bulunamadı."
           }
         }
@@ -1486,6 +1488,8 @@ async function executeBuiltInTool(
         return {
           success: true,
           pricingPrompt: pricingPrompt,
+          rules: pricingData.rules || {},
+          discounts: pricingData.discounts || [],
           message: pricingPrompt 
             ? "Fiyat hesaplama kuralları başarıyla alındı." 
             : "Fiyat hesaplama prompt'u bulunamadı."
