@@ -132,20 +132,32 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20" />
 
         <div className="relative z-10 flex flex-col justify-center px-12 text-white">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/10 p-8 rounded-2xl max-w-lg shadow-2xl">
-            <h3 className="text-2xl font-bold mb-4">
-              Next Generation Voice AI
-            </h3>
-            <p className="text-gray-300 leading-relaxed mb-6">
-              Deploy intelligent voice agents that sound human, handle complex tasks, and scale infinitely. Manage your entire voice infrastructure from one beautiful dashboard.
-            </p>
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                Operational
+          <div className="bg-red-900/40 backdrop-blur-xl border border-red-500/30 p-8 rounded-2xl max-w-lg shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-red-500/20 p-2 rounded-lg">
+                <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
               </div>
-              <div className="h-4 w-px bg-white/20" />
-              <div>version 2.0</div>
+              <h3 className="text-2xl font-bold text-red-300">
+                ⚠️ Lisanssız Demo Sürümü
+              </h3>
+            </div>
+            <p className="text-red-200/80 leading-relaxed mb-4">
+              Bu platform henüz lisanslanmamış olup satışa hazır değildir. Ticari kullanım ve alt kiracı hizmeti için lütfen lisans sahibi ile iletişime geçiniz.
+            </p>
+            <div className="border-t border-red-500/20 pt-4 mt-4">
+              <p className="text-red-300/60 text-sm">
+                RezonAll Sesli Asistan Platformu — Tüm hakları saklıdır.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-red-400/60 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+                DEMO
+              </div>
+              <div className="h-4 w-px bg-red-500/20" />
+              <div>Lisanssız Versiyon</div>
             </div>
           </div>
         </div>
