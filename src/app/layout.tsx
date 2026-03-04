@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Providers } from "@/components/providers"
+import { DemoWatermark } from "@/components/demo-watermark"
 
 export const metadata: Metadata = {
-  title: "RezonAll - Voice AI Dashboard",
-  description: "Advanced voice bot management platform",
+  title: "RezonAll - Voice AI Dashboard [DEMO]",
+  description: "Advanced voice bot management platform - DEMO VERSION",
 }
 
 import { Inter } from "next/font/google"
@@ -20,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <DemoWatermark />
         <Providers>{children}</Providers>
       </body>
     </html>
