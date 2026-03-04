@@ -146,11 +146,8 @@ export default function LoginPage() {
             <p className="text-red-200/80 leading-relaxed mb-4">
               Bu platform henüz lisanslanmamış olup satışa hazır değildir. Ticari kullanım ve alt kiracı hizmeti için lütfen lisans sahibi ile iletişime geçiniz.
             </p>
-            <div className="border-t border-red-500/20 pt-4 mt-4">
-              <p className="text-red-300/60 text-sm">
-                RezonAll Sesli Asistan Platformu — Tüm hakları saklıdır.
-              </p>
-            </div>
+
+
             <div className="flex items-center gap-4 text-sm text-red-400/60 mt-4">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
