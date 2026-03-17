@@ -11,7 +11,7 @@ Bu dokümantasyon, sistemdeki tüm kullanıcı rollerinin sahip olduğu yetkiler
 3. [Hotel User (Otel Kullanıcı)](#3-hotel-user-otel-kullanıcı)
 4. [Super Admin (Platform Yöneticisi)](#4-super-admin-platform-yöneticisi)
 5. [Genel Özellikler](#5-genel-özellikler)
-
+..
 ---
 
 ## 1. Admin User (Yönetici Kullanıcı)
